@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal HidroGestão - CEPNAC</title>
+    <style>
+        :root { --primary: #004d40; --secondary: #00796b; --accent: #4db6ac; --bg: #f4f7f6; --text: #2c3e50; --sidebar-w: 280px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { display: flex; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+        
+        aside.sidebar { width: var(--sidebar-w); background: var(--primary); color: white; height: 100%; overflow-y: auto; position: fixed; padding: 20px; box-shadow: 3px 0 10px rgba(0,0,0,0.2); z-index: 100; }
+        .sidebar h2 { font-size: 1.3rem; margin-bottom: 5px; color: #e0f2f1; text-transform: uppercase; }
+        .sidebar p.subtitle { font-size: 0.8rem; color: #b2dfdb; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 15px; margin-bottom: 20px; }
+        
+        .student-login { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .student-login input { width: 100%; padding: 10px; margin-top: 8px; border-radius: 4px; border: none; font-size: 0.9rem; }
+        .student-login button { width: 100%; padding: 10px; margin-top: 10px; background: var(--accent); color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .student-login button:hover { background: #26a69a; }
+        
+        .nav-group ul { list-style: none; }
+        .nav-group li { padding: 12px; margin-bottom: 5px; border-radius: 6px; cursor: pointer; font-size: 0.95rem; border-left: 4px solid transparent; transition: 0.2s; }
+        .nav-group li:hover { background: rgba(255,255,255,0.1); }
+        .nav-group li.active { background: var(--secondary); font-weight: bold; border-left-color: #fff; }
+        .nav-group li.report-btn { background: #ffb300; color: #333; font-weight: bold; border-left-color: #ff6f00; margin-top: 15px; }
+
+        main.content { margin-left: var(--sidebar-w); flex: 1; padding: 40px 60px; height: 100vh; overflow-y: auto; scroll-behavior: smooth; }
+        .aula-section { display: none; max-width: 900px; margin: 0 auto; animation: fadeIn 0.4s ease; }
+        .aula-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1 { color: var(--primary); font-size: 2.2rem; border-bottom: 3px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; }
+        h2 { color: var(--secondary); font-size: 1.5rem; margin: 30px 0 15px 0; }
+        h3 { color: #00695c; margin: 20px 0 10px 0; }
+        p, li { line-height: 1.7; font-size: 1.05rem; margin-bottom: 15px; text-align: justify; }
+        ul { margin-left: 20px; }
+
+        .card-conceito { background: #e0f2f1; border-left: 6px solid var(--secondary); padding: 20px; border-radius: 0 8px 8px 0; margin-bottom: 20px; }
+        .card-estudo { background: #fff8e1; border-left: 6px solid #ffa000; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .citacao { font-style: italic; background: #eceff1; border-left: 5px solid #90a4ae; padding: 20px 30px; border-radius: 0 8px 8px 0; margin-bottom: 20px; }
+        
+        .svg-container { text-align: center; background: #fafafa; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; margin: 30px 0; }
+        .svg-title { font-weight: bold; color: #333; margin-bottom: 15px; }
+        .flow { animation: dash 2s linear infinite; }
+        .raindrop { animation: drop 1s linear infinite; }
+        @keyframes dash { to { stroke-dashoffset: -20; } }
+        @keyframes drop { 0% { transform: translateY(0); opacity: 1;} 100% { transform: translateY(30px); opacity: 0;} }
+
+        .quiz-container { background: #fff; border: 2px solid var(--accent); border-radius: 10px; padding: 30px; margin-top: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .badge-tri { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; color: white; margin-bottom: 10px; }
+        .facil { background: #4caf50; } .media { background: #ff9800; } .dificil { background: #f44336; }
+        
+        .question-group { margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+        .options label { display: block; padding: 12px; background: #f8f9fa; margin-bottom: 8px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
+        .options label:hover { background: #e0f2f1; border-color: #b2dfdb; }
+        .btn-submit { background: var(--primary); color: white; border: none; padding: 15px; font-size: 1.1rem; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; }
+        .feedback { display: none; padding: 15px; border-radius: 6px; margin-top: 10px; font-weight: bold; }
+        .correct { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+        .incorrect { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+        .result-box { display: none; background: var(--primary); color: white; padding: 20px; text-align: center; border-radius: 8px; margin-top: 20px; font-size: 1.2rem; }
+        
+        .report-card { background: #f1f8e9; border: 1px solid #c5e1a5; padding: 20px; border-radius: 8px; margin-bottom: 15px; }
+        .export-btn { background: #25D366; color: white; padding: 15px; border: none; border-radius: 8px; width: 100%; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <h2>HidroGestão CEPNAC</h2>
+        <p class="subtitle">Prof. Michel Ferreira | 2026</p>
+        <div class="student-login" id="login-box">
+            <label style="color:white; font-size:0.9rem;">Identificação do Aluno:</label>
+            <input type="text" id="studentName" placeholder="Seu nome completo">
+            <button onclick="saveStudent()">Acessar Plataforma</button>
+        </div>
+        <div id="welcome-msg" style="display:none; color:#e0f2f1; margin-bottom:20px; font-weight:bold;"></div>
+        
+        <div class="nav-group">
+            <ul id="menu-list">
+                <li onclick="showAula('aula1')" class="active" id="nav-aula1">Aula 1: Hidrologia</li>
+                <li onclick="showAula('aula2')" id="nav-aula2">Aula 2: Disponibilidade</li>
+                <li onclick="showAula('aula3')" id="nav-aula3">Aula 3: Múltiplos Usos</li>
+                <li onclick="showAula('aula4')" id="nav-aula4">Aula 4: Lei das Águas</li>
+                <li onclick="showAula('relatorio')" class="report-btn" id="nav-relatorio">📊 Meu Relatório (TRI)</li>
+            </ul>
+        </div>
+    </aside>
+
+    <main class="content">
+
+        <section id="aula1" class="aula-section active">
+            <h1>Aula 1 - Hidrologia: Ciclo Hidrológico e Balanço Hídrico</h1>
+            <div class="card-conceito">
+                <p><strong>A Base da Gestão:</strong> A Hidrologia estuda a circulação da água. Para os técnicos do CEPNAC, a regra é clara: não se gere o que não se mede. O balanço hídrico é a contabilidade da bacia.</p>
+            </div>
+            
+            <h2>1. Ciclo Natural vs. Urbano</h2>
+            <p>Em Camaçari, a impermeabilização do solo (asfalto) reduz a infiltração e aumenta drasticamente o escoamento superficial, causando as inundações que vemos na malha urbana.</p>
+            <div class="svg-container">
+                <div class="svg-title" style="color:#1976d2;">Esquema 1: Impacto da Impermeabilização</div>
+                <svg width="500" height="200" viewBox="0 0 500 200">
+                    <rect x="50" y="150" width="180" height="40" fill="#a5d6a7" />
+                    <text x="140" y="140" font-weight="bold" fill="#2e7d32" text-anchor="middle">Solo Natural</text>
+                    <line x1="140" y1="150" x2="140" y2="190" stroke="#0288d1" stroke-width="4" stroke-dasharray="4,4" class="flow"/>
+                    <text x="140" y="195" font-size="12" text-anchor="middle">Infiltração</text>
+                    
+                    <rect x="270" y="150" width="180" height="40" fill="#9e9e9e" />
+                    <text x="360" y="140" font-weight="bold" fill="#424242" text-anchor="middle">Asfalto Urbano</text>
+                    <line x1="270" y1="145" x2="480" y2="145" stroke="#d32f2f" stroke-width="5" stroke-dasharray="8,8" class="flow"/>
+                    <text x="360" y="130" font-size="12" fill="#d32f2f" text-anchor="middle">Escoamento / Enchentes</text>
+                </svg>
+            </div>
+
+            <div class="card-estudo">
+                <h3>Balanço Hídrico: O Aquífero São Sebastião-Marizal</h3>
+                <p>A fórmula é <strong>ΔS = P - (E + Q)</strong>. O Polo de Camaçari extrai volumes gigantescos do subsolo. Se a recarga anual (P) for 50 milhões de m³, e a extração (Q) for 55 milhões, temos um ΔS negativo de -5 milhões. O aquífero sofre "mineração", o que rebaixa o lençol freático e seca os poços das comunidades.</p>
+            </div>
+
+            <div class="quiz-container">
+                <h2>Simulado TRI - Aula 1</h2>
+                <form id="quiz-aula1" onsubmit="evaluateQuiz(event, 'aula1', 5)">
+                    <div class="question-group" data-answer="d" data-difficulty="facil">
+                        <span class="badge-tri facil">Fácil</span>
+                        <p>1. O principal impacto físico direto da impermeabilização do solo em Camaçari é a:</p>
+                        <div class="options">
+                            <label><input type="radio" name="q1_a1" value="a"> a) redução térmica.</label>
+                            <label><input type="radio" name="q1_a1" value="b"> b) aumento da infiltração profunda.</label>
+                            <label><input type="radio" name="q1_a1" value="c"> c) diminuição do escoamento.</label>
+                            <label><input type="radio" name="q1_a1" value="d"> d) redução drástica da infiltração e aumento do escoamento superficial, causando enchentes.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="c" data-difficulty="media">
+                        <span class="badge-tri media">Médio</span>
+                        <p>2. Se a Precipitação (P) é 1200mm, Evapotranspiração (E) 800mm e Extração (Q) 500mm, o ΔS indica:</p>
+                        <div class="options">
+                            <label><input type="radio" name="q2_a1" value="a"> a) superávit de 100mm.</label>
+                            <label><input type="radio" name="q2_a1" value="b"> b) equilíbrio.</label>
+                            <label><input type="radio" name="q2_a1" value="c"> c) défice de 100mm, configurando mineração de água.</label>
+                            <label><input type="radio" name="q2_a1" value="d"> d) criação de novo aquífero.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="e" data-difficulty="dificil">
+                        <span class="badge-tri dificil">Difícil</span>
+                        <p>3. A consequência hidráulica direta a longo prazo da mineração de um aquífero é o(a):</p>
+                        <div class="options">
+                            <label><input type="radio" name="q3_a1" value="a"> a) aumento do volume dos rios conectados.</label>
+                            <label><input type="radio" name="q3_a1" value="b"> b) purificação da água restante.</label>
+                            <label><input type="radio" name="q3_a1" value="c"> c) transbordamento de águas profundas.</label>
+                            <label><input type="radio" name="q3_a1" value="d"> d) elevação do lençol freático.</label>
+                            <label><input type="radio" name="q3_a1" value="e"> e) rebaixamento progressivo do lençol freático, encarecendo bombeamento e secando poços.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="b" data-difficulty="facil">
+                        <span class="badge-tri facil">Fácil</span>
+                        <p>4. Para melhorar o balanço hídrico, o Plano Diretor Urbano deve incentivar:</p>
+                        <div class="options">
+                            <label><input type="radio" name="q4_a1" value="a"> a) a canalização dos rios em concreto.</label>
+                            <label><input type="radio" name="q4_a1" value="b"> b) adoção de Soluções Baseadas na Natureza (áreas verdes e pisos drenantes).</label>
+                            <label><input type="radio" name="q4_a1" value="c"> c) perfuração irrestrita de poços.</label>
+                            <label><input type="radio" name="q4_a1" value="d"> d) construção de telhados asfálticos.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="a" data-difficulty="media">
+                        <span class="badge-tri media">Médio</span>
+                        <p>5. O desmatamento da mata ciliar (vegetação marginal) gera frequentemente:</p>
+                        <div class="options">
+                            <label><input type="radio" name="q5_a1" value="a"> a) o aumento do assoreamento, carreando terra para o fundo do rio.</label>
+                            <label><input type="radio" name="q5_a1" value="b"> b) a redução da turbidez.</label>
+                            <label><input type="radio" name="q5_a1" value="c"> c) o aumento prolongado do escoamento na seca.</label>
+                            <label><input type="radio" name="q5_a1" value="d"> d) o impedimento físico de inundações.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <button type="submit" class="btn-submit">Gravar Simulado</button>
+                    <div class="result-box" id="result-aula1"></div>
+                </form>
+            </div>
+        </section>
+
+        <section id="aula2" class="aula-section">
+            <h1>Aula 2 - Disponibilidade Hídrica: Desigualdade</h1>
+            <div class="card-conceito">
+                <p><strong>A Ilusão da Abundância:</strong> O Brasil tem 12% da água doce do mundo, mas vive o <em>Paradoxo Hídrico</em>: a Amazônia tem 70% das águas para pouca gente, enquanto Nordeste e Sudeste concentram a população e o PIB, mas dividem pouca água.</p>
+            </div>
+            
+            <div class="card-estudo">
+                <h3>Tecnologia Social: O Programa 1 Milhão de Cisternas</h3>
+                <p>O sertão baiano sofre de escassez física. A revolução veio com a tecnologia de captação de chuva pelos telhados. O P1MC mudou a lógica de "combate à seca" para <em>"convivência com o semiárido"</em>, libertando o povo da dependência dos caminhões-pipa (indústria da seca).</p>
+            </div>
+
+            <div class="svg-container">
+                <div class="svg-title" style="color:#f57f17;">Esquema: A Cisterna de Placas</div>
+                <svg width="400" height="200" viewBox="0 0 400 200">
+                    <polygon points="50,100 150,100 100,50" fill="#d32f2f" />
+                    <rect x="60" y="100" width="80" height="60" fill="#cfd8dc" />
+                    <path d="M 80 40 Q 110 10 140 40" fill="#78909c"/>
+                    <line x1="110" y1="40" x2="110" y2="80" stroke="#1976d2" stroke-width="2" class="raindrop" />
+                    <line x1="150" y1="100" x2="200" y2="100" stroke="#546e7a" stroke-width="4" />
+                    <line x1="198" y1="100" x2="198" y2="150" stroke="#546e7a" stroke-width="4" />
+                    <path d="M 220 120 L 280 120 L 280 180 L 220 180 Z" fill="none" stroke="#757575" stroke-width="4" />
+                    <rect x="222" y="150" width="56" height="28" fill="#29b6f6" />
+                    <text x="250" y="110" font-weight="bold" font-size="12" text-anchor="middle">Armazenamento (Seca)</text>
+                </svg>
+            </div>
+
+            <div class="quiz-container">
+                <h2>Simulado TRI - Aula 2</h2>
+                <form id="quiz-aula2" onsubmit="evaluateQuiz(event, 'aula2', 5)">
+                    <div class="question-group" data-answer="b" data-difficulty="facil">
+                        <span class="badge-tri facil">Fácil</span>
+                        <p>1. A oferta global de água potável é restrita principalmente porque:</p>
+                        <div class="options">
+                            <label><input type="radio" name="q1_a2" value="a"> a) toda a água está no subsolo.</label>
+                            <label><input type="radio" name="q1_a2" value="b"> b) a esmagadora maioria da água doce acessível está congelada em geleiras.</label>
+                            <label><input type="radio" name="q1_a2" value="c"> c) a água dissolve-se no mar.</label>
+                            <label><input type="radio" name="q1_a2" value="d"> d) a ONU proibiu captações fluviais.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="d" data-difficulty="media">
+                        <span class="badge-tri media">Médio</span>
+                        <p>2. O "paradoxo hídrico-demográfico brasileiro" define-se pela:</p>
+                        <div class="options">
+                            <label><input type="radio" name="q2_a2" value="a"> a) ausência de rios no Nordeste.</label>
+                            <label><input type="radio" name="q2_a2" value="b"> b) dependência de aquíferos argentinos.</label>
+                            <label><input type="radio" name="q2_a2" value="c"> c) evaporação total das chuvas de verão.</label>
+                            <label><input type="radio" name="q2_a2" value="d"> d) concentração de água na Amazônia (pouca população) e escassez em regiões densamente povoadas (Nordeste/Sudeste).</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="a" data-difficulty="media">
+                        <span class="badge-tri media">Médio</span>
+                        <p>3. Falta de água nas periferias de Salvador, mesmo com chuvas constantes, é um caso de:</p>
+                        <div class="options">
+                            <label><input type="radio" name="q3_a2" value="a"> a) Escassez estrutural/econômica (subinvestimento em saneamento).</label>
+                            <label><input type="radio" name="q3_a2" value="b"> b) Escassez geológica profunda.</label>
+                            <label><input type="radio" name="q3_a2" value="c"> c) Escassez química absoluta.</label>
+                            <label><input type="radio" name="q3_a2" value="d"> d) Seca meteorológica pura.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="e" data-difficulty="dificil">
+                        <span class="badge-tri dificil">Difícil</span>
+                        <p>4. O Programa 1 Milhão de Cisternas (P1MC) alterou o paradigma social do sertão ao focar na ideia de:</p>
+                        <div class="options">
+                            <label><input type="radio" name="q4_a2" value="a"> a) transposição obrigatória de rios.</label>
+                            <label><input type="radio" name="q4_a2" value="b"> b) financiamento do êxodo rural para o Polo de Camaçari.</label>
+                            <label><input type="radio" name="q4_a2" value="c"> c) manipulação artificial de chuvas.</label>
+                            <label><input type="radio" name="q4_a2" value="d"> d) privatização hídrica rural.</label>
+                            <label><input type="radio" name="q4_a2" value="e"> e) convivência com o semiárido, garantindo autonomia hídrica através da captação das chuvas locais.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="c" data-difficulty="facil">
+                        <span class="badge-tri facil">Fácil</span>
+                        <p>5. A Resolução 64/292 da ONU oficializou que o acesso à água potável é:</p>
+                        <div class="options">
+                            <label><input type="radio" name="q5_a2" value="a"> a) exclusividade de países ricos.</label>
+                            <label><input type="radio" name="q5_a2" value="b"> b) um produto regulado pela bolsa de valores.</label>
+                            <label><input type="radio" name="q5_a2" value="c"> c) um direito humano essencial e inegociável à vida.</label>
+                            <label><input type="radio" name="q5_a2" value="d"> d) responsabilidade do agronegócio.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <button type="submit" class="btn-submit">Gravar Simulado</button>
+                    <div class="result-box" id="result-aula2"></div>
+                </form>
+            </div>
+        </section>
+
+        <section id="aula3" class="aula-section">
+            <h1>Aula 3 - Múltiplos Usos: Agronegócio, Indústria e Consumo</h1>
+            <div class="card-conceito">
+                <p><strong>Uso Múltiplo vs Prioridade:</strong> A gestão deve conciliar indústria, agro e lazer no mesmo rio. Contudo, em cenários de secas agudas, o Art. 1º da Lei 9.433 dita: <strong>a prioridade absoluta é o consumo humano e a dessedentação de animais.</strong></p>
+            </div>
+
+            <h2>1. Distribuição e Água Virtual</h2>
+            <p>O Agronegócio consome ~72% da água do país, a indústria ~18%, e as cidades apenas ~10%. O conceito de <strong>Água Virtual</strong> expõe o volume invisível na produção. Produzir 1kg de carne bovina gasta, em média, 15.000 litros de água (rega de pasto, hidratação, etc). Ao exportar soja e carne pelo porto de Salvador, o Brasil exporta as suas reservas hídricas.</p>
+
+            <div class="svg-container">
+                <div class="svg-title" style="color:#2e7d32;">Esquema: A Pegada da Água Virtual</div>
+                <svg width="400" height="120" viewBox="0 0 400 120">
+                    <text x="50" y="70" font-size="35">🐄</text>
+                    <text x="65" y="100" font-size="12" font-weight="bold" text-anchor="middle">1 kg de Carne</text>
+                    <text x="150" y="70" font-size="30" font-weight="bold">=</text>
+                    <path d="M 220 50 Q 240 10 260 50 Q 280 90 240 110 Q 200 90 220 50" fill="#29b6f6" />
+                    <text x="240" y="80" font-size="14" fill="#fff" font-weight="bold" text-anchor="middle">15.000 L</text>
+                </svg>
+            </div>
+
+            <div class="citacao">
+                "A água que irriga as imensas plantações de exportação é a mesma água que seca nas torneiras dos ribeirinhos."<br>
+                <span style="font-size: 0.95rem; display: block; margin-top: 10px; font-weight: bold;">Análise Crítica: A Guerra das Águas em Correntina</span> 
+                <span style="font-size: 0.95rem; color: #333;">No Oeste da Bahia, gigantescos pivôs centrais de irrigação rebaixam o Aquífero Urucuia e secam os rios (como o Rio Arrojado), gerando revoltas populares. Para o Polo de Camaçari não sofrer o mesmo colapso, a indústria investe em projetos de <strong>Reúso de Água</strong> (Projeto Água Viva), tratando esgoto urbano para usar nas caldeiras e poupando água virgem para a Embasa.</span>
+            </div>
+
+            <div class="quiz-container">
+                <h2>Simulado TRI - Aula 3</h2>
+                <form id="quiz-aula3" onsubmit="evaluateQuiz(event, 'aula3', 5)">
+                    <div class="question-group" data-answer="b" data-difficulty="facil">
+                        <span class="badge-tri facil">Fácil</span>
+                        <p>1. Qual setor económico capta cerca de 70% a 72% de toda a água doce utilizada no Brasil?</p>
+                        <div class="options">
+                            <label><input type="radio" name="q1_a3" value="a"> a) Saneamento básico.</label>
+                            <label><input type="radio" name="q1_a3" value="b"> b) Agronegócio (agricultura irrigada e pecuária).</label>
+                            <label><input type="radio" name="q1_a3" value="c"> c) Mineração e siderurgia.</label>
+                            <label><input type="radio" name="q1_a3" value="d"> d) Polo petroquímico e indústrias.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="d" data-difficulty="media">
+                        <span class="badge-tri media">Médio</span>
+                        <p>2. Em caso de escassez extrema no Rio Joanes, o INEMA deve arbitrar o conflito entre o Polo de Camaçari e os bairros baseando-se no princípio de que:</p>
+                        <div class="options">
+                            <label><input type="radio" name="q2_a3" value="a"> a) a indústria tem primazia fiscal.</label>
+                            <label><input type="radio" name="q2_a3" value="b"> b) a água é rateada em exatos 50%.</label>
+                            <label><input type="radio" name="q2_a3" value="c"> c) as águas são leiloadas.</label>
+                            <label><input type="radio" name="q2_a3" value="d"> d) o consumo humano e a dessedentação de animais possuem prioridade absoluta e inegociável.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="a" data-difficulty="media">
+                        <span class="badge-tri media">Médio</span>
+                        <p>3. O volume de água embutido em toda a cadeia produtiva da soja exportada do Oeste Baiano é classificado como:</p>
+                        <div class="options">
+                            <label><input type="radio" name="q3_a3" value="a"> a) Água Virtual.</label>
+                            <label><input type="radio" name="q3_a3" value="b"> b) Evapotranspiração Comercial.</label>
+                            <label><input type="radio" name="q3_a3" value="c"> c) Eutrofização Agrícola.</label>
+                            <label><input type="radio" name="q3_a3" value="d"> d) Pegada de Carbono.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="e" data-difficulty="dificil">
+                        <span class="badge-tri dificil">Difícil</span>
+                        <p>4. Um uso hídrico onde a água aproveita a dinâmica fluvial, mas não é removida nem evaporada definitivamente do sistema, sendo considerado "NÃO-consuntivo", é a:</p>
+                        <div class="options">
+                            <label><input type="radio" name="q4_a3" value="a"> a) Irrigação por pivô central.</label>
+                            <label><input type="radio" name="q4_a3" value="b"> b) Arrefecimento de caldeiras industriais (torres abertas).</label>
+                            <label><input type="radio" name="q4_a3" value="c"> c) Envase de água mineral.</label>
+                            <label><input type="radio" name="q4_a3" value="d"> d) Dessedentação bovina.</label>
+                            <label><input type="radio" name="q4_a3" value="e"> e) Geração de energia nas usinas hidrelétricas.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="c" data-difficulty="media">
+                        <span class="badge-tri media">Médio</span>
+                        <p>5. Qual tecnologia de irrigação, se exigida nos licenciamentos, otimiza o uso hídrico na lavoura e mitiga o esgotamento dos rios?</p>
+                        <div class="options">
+                            <label><input type="radio" name="q5_a3" value="a"> a) Irrigação por alagamento.</label>
+                            <label><input type="radio" name="q5_a3" value="b"> b) Plantio de espécies de pântanos.</label>
+                            <label><input type="radio" name="q5_a3" value="c"> c) Microirrigação (gota a gota), entregando a água na raiz e anulando evaporação.</label>
+                            <label><input type="radio" name="q5_a3" value="d"> d) Irrigação aos meios-dias.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <button type="submit" class="btn-submit">Gravar Simulado</button>
+                    <div class="result-box" id="result-aula3"></div>
+                </form>
+            </div>
+        </section>
+
+        <section id="aula4" class="aula-section">
+            <h1>Aula 4 - Lei das Águas (9.433/97): Fundamentos</h1>
+            <div class="card-conceito">
+                <p><strong>1º Fundamento: Bem Público:</strong> A água não pode pertencer a entidades privadas. Se nascer um rio na sua fazenda, a água é do Estado, que apenas lhe concede o "direito de uso" temporário (Outorga).</p>
+            </div>
+
+            <h2>Os Pilares da Gestão</h2>
+            <p>Além de Bem Público, a água possui <strong>Valor Econômico</strong> (cobrança para frear desperdício). O planejamento deve ser feito obrigatoriamente pela <strong>Bacia Hidrográfica</strong>, pois a água obedece ao relevo e não a fronteiras políticas municipais.</p>
+
+            <div class="svg-container" style="background: #e3f2fd; border-color: #90caf9;">
+                <div class="svg-title" style="color: #0277bd;">Esquema: A Lógica da Bacia Hidrográfica</div>
+                <svg width="450" height="180" viewBox="0 0 450 180">
+                    <line x1="225" y1="0" x2="225" y2="180" stroke="#f44336" stroke-width="4" stroke-dasharray="10,10" />
+                    <text x="110" y="25" font-weight="bold" fill="#d32f2f">Prefeitura A</text>
+                    <text x="340" y="25" font-weight="bold" fill="#d32f2f">Prefeitura B</text>
+                    <path d="M 50 50 Q 150 150 250 100 T 450 150" fill="none" stroke="#29b6f6" stroke-width="12" />
+                    <rect x="80" y="30" width="40" height="30" fill="#757575" />
+                    <line x1="100" y1="60" x2="115" y2="80" stroke="#795548" stroke-width="5" />
+                    <text x="365" y="80" font-weight="bold" fill="#e65100" text-anchor="middle">Água Contaminada!</text>
+                </svg>
+                <p style="font-size: 0.85rem; color: #555; margin-top: 10px;">A poluição a montante afeta a cidade a jusante. Por isso os limites políticos são inúteis na hidrologia.</p>
+            </div>
+
+            <div class="card-estudo">
+                <h3>A Gestão Descentralizada: Comitê de Bacia (CBH)</h3>
+                <p>No Brasil, não há ditadura hídrica. Em Camaçari, o <strong>Comitê do Recôncavo Norte</strong> atua como o "parlamento das águas". Ele é um triângulo democrático com poder de voto: 1/3 para o Poder Público (INEMA/Prefeituras), 1/3 para os Usuários (Indústrias/Embasa/Agro), e 1/3 para a <strong>Sociedade Civil (ONGs)</strong>, que exerce o controle social sobre a qualidade e destinação do dinheiro arrecadado.</p>
+            </div>
+
+            <div class="quiz-container">
+                <h2>Simulado TRI - Aula 4</h2>
+                <form id="quiz-aula4" onsubmit="evaluateQuiz(event, 'aula4', 5)">
+                    <div class="question-group" data-answer="b" data-difficulty="media">
+                        <span class="badge-tri media">Médio</span>
+                        <p>1. Um fazendeiro represou todo o riacho que nascia nas suas terras, secando os vizinhos. Sob a PNRH, a atitude é:</p>
+                        <div class="options">
+                            <label><input type="radio" name="q1_a4" value="a"> a) legal, pois o dono da terra possui tudo na sua superfície.</label>
+                            <label><input type="radio" name="q1_a4" value="b"> b) ilegal, pois a água é um bem de domínio público inalienável; intervenções exigem outorga.</label>
+                            <label><input type="radio" name="q1_a4" value="c"> c) legal, caso use só para irrigação.</label>
+                            <label><input type="radio" name="q1_a4" value="d"> d) ilegal, por falta de alvará municipal de obras.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="d" data-difficulty="facil">
+                        <span class="badge-tri facil">Fácil</span>
+                        <p>2. A unidade territorial estipulada pela Lei 9.433 para o planejamento hídrico é a(o):</p>
+                        <div class="options">
+                            <label><input type="radio" name="q2_a4" value="a"> a) distrito sede municipal.</label>
+                            <label><input type="radio" name="q2_a4" value="b"> b) bioma florestal.</label>
+                            <label><input type="radio" name="q2_a4" value="c"> c) Exército Brasileiro.</label>
+                            <label><input type="radio" name="q2_a4" value="d"> d) bacia hidrográfica, uma vez que a dinâmica natural das águas ignora as fronteiras políticas criadas pelo homem.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="a" data-difficulty="dificil">
+                        <span class="badge-tri dificil">Difícil</span>
+                        <p>3. A atribuição do "valor econômico" à água tem como objetivo prático ambiental:</p>
+                        <div class="options">
+                            <label><input type="radio" name="q3_a4" value="a"> a) aplicar a cobrança financeira aos grandes usuários (indústria/agro) para inibir o desperdício e arrecadar fundos para recuperar a bacia.</label>
+                            <label><input type="radio" name="q3_a4" value="b"> b) autorizar a privatização das nascentes.</label>
+                            <label><input type="radio" name="q3_a4" value="c"> c) taxar as chuvas da população carente.</label>
+                            <label><input type="radio" name="q3_a4" value="d"> d) pagar a dívida externa federal.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="e" data-difficulty="media">
+                        <span class="badge-tri media">Médio</span>
+                        <p>4. Qual é o órgão criado para ser o "parlamento local", onde o Estado, os Usuários e a Sociedade votam sobre as águas?</p>
+                        <div class="options">
+                            <label><input type="radio" name="q4_a4" value="a"> a) Supremo Tribunal Regional.</label>
+                            <label><input type="radio" name="q4_a4" value="b"> b) Sindicato Patronal.</label>
+                            <label><input type="radio" name="q4_a4" value="c"> c) Agência Nacional de Energia.</label>
+                            <label><input type="radio" name="q4_a4" value="d"> d) Fiscalização do IBAMA.</label>
+                            <label><input type="radio" name="q4_a4" value="e"> e) Comitê de Bacia Hidrográfica (CBH).</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <div class="question-group" data-answer="c" data-difficulty="facil">
+                        <span class="badge-tri facil">Fácil</span>
+                        <p>5. O papel das Organizações Não Governamentais (Sociedade Civil) dentro dos Comitês de Bacia assegura primordialmente o(a):</p>
+                        <div class="options">
+                            <label><input type="radio" name="q5_a4" value="a"> a) instalação de tubulações nas ruas.</label>
+                            <label><input type="radio" name="q5_a4" value="b"> b) poder policial de prender empresários.</label>
+                            <label><input type="radio" name="q5_a4" value="c"> c) controle social das decisões governamentais, debatendo a aplicação de recursos e protegendo comunidades vulneráveis nas outorgas.</label>
+                            <label><input type="radio" name="q5_a4" value="d"> d) revogação da Constituição do Estado.</label>
+                        </div><div class="feedback"></div>
+                    </div>
+                    <button type="submit" class="btn-submit">Gravar Simulado</button>
+                    <div class="result-box" id="result-aula4"></div>
+                </form>
+            </div>
+        </section>
+
+        <section id="relatorio" class="aula-section">
+            <h1>📊 O Meu Relatório Escolar (Desempenho TRI)</h1>
+            <p>O algoritmo da plataforma calcula a nota pela <strong>Teoria da Resposta ao Item (TRI)</strong>. Acertar questões de nível "Difícil" e errar as de nível "Fácil" aciona o detector de "chute", reduzindo a coerência pedagógica e a pontuação final (Escala 1000).</p>
+            <div id="report-content" style="margin-top: 30px;"></div>
+            <button class="export-btn" onclick="exportToWhatsApp()">📲 Enviar Relatório via WhatsApp para o Professor Michel</button>
+        </section>
+
+    </main>
+
+    <script>
+        let studentData = JSON.parse(localStorage.getItem('hidroGestaoData')) || { name: "", results: {} };
+
+        window.onload = () => {
+            if (studentData.name) {
+                document.getElementById('login-box').style.display = 'none';
+                let msg = document.getElementById('welcome-msg');
+                msg.style.display = 'block';
+                msg.innerHTML = `🎓 Estudante Conectado: <br><span style="color:#fff; font-size:1.2rem;">${studentData.name}</span> <br><span style="font-size:0.8rem; cursor:pointer; color:#ffcc80; text-decoration:underline;" onclick="logout()">[Sair do Sistema]</span>`;
+            }
+        };
+
+        function saveStudent() {
+            const name = document.getElementById('studentName').value;
+            if(name.trim() === "") return alert("Identifique-se para acessar as avaliações!");
+            studentData.name = name;
+            localStorage.setItem('hidroGestaoData', JSON.stringify(studentData));
+            location.reload();
+        }
+
+        function logout() { localStorage.removeItem('hidroGestaoData'); location.reload(); }
+
+        function showAula(aulaId) {
+            document.querySelectorAll('.aula-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.nav-group li').forEach(li => li.classList.remove('active'));
+            document.getElementById(aulaId).classList.add('active');
+            document.getElementById('nav-' + aulaId).classList.add('active');
+            if (aulaId === 'relatorio') buildReport();
+            document.querySelector('.content').scrollTo(0,0);
+        }
+
+        function evaluateQuiz(event, aulaId, totalQuestoes) {
+            event.preventDefault();
+            if(!studentData.name) return alert("Acesso negado: Identifique-se no menu lateral.");
+
+            const form = document.getElementById('quiz-' + aulaId);
+            const questions = form.querySelectorAll('.question-group');
+            let rawScore = 0; let hits = { facil: 0, media: 0, dificil: 0 }; let total = { facil: 0, media: 0, dificil: 0 };
+            let answeredCount = 0;
+
+            form.querySelectorAll('.feedback').forEach(f => { f.style.display = 'none'; f.className = 'feedback'; });
+
+            questions.forEach((q) => {
+                const diff = q.getAttribute('data-difficulty');
+                const correctAnswer = q.getAttribute('data-answer');
+                const radioName = q.querySelector('input[type="radio"]').name;
+                const selected = form.querySelector(`input[name="${radioName}"]:checked`);
+                const fDiv = q.querySelector('.feedback');
+                
+                total[diff]++;
+
+                if (!selected) {
+                    fDiv.innerHTML = "⚠️ Marque uma alternativa."; fDiv.style.display = 'block';
+                } else {
+                    answeredCount++;
+                    if (selected.value === correctAnswer) {
+                        rawScore++; hits[diff]++;
+                        fDiv.innerHTML = "✔️ Correto!"; fDiv.classList.add('correct');
+                    } else {
+                        fDiv.innerHTML = `❌ Incorreto. A resposta certa é a alternativa <strong>${correctAnswer.toUpperCase()}</strong>.`; fDiv.classList.add('incorrect');
+                    }
+                    fDiv.style.display = 'block';
+                }
+            });
+
+            if (answeredCount < totalQuestoes) return alert("Responda todas as questões!");
+
+            // Algoritmo TRI Simulado (Base 1000)
+            let triScore = 200; 
+            triScore += (hits.facil * 80);
+            triScore += (hits.media * 100);
+            
+            let penalty = false;
+            if (hits.dificil > 0 && hits.facil < total.facil) {
+                penalty = true; triScore += (hits.dificil * 40); 
+            } else {
+                triScore += (hits.dificil * 120); 
+            }
+
+            if(triScore > 1000) triScore = 1000;
+            
+            studentData.results[aulaId] = { raw: rawScore, total: totalQuestoes, tri: triScore, coherencePenalty: penalty };
+            localStorage.setItem('hidroGestaoData', JSON.stringify(studentData));
+
+            const rBox = document.getElementById('result-' + aulaId);
+            rBox.innerHTML = `Sua Nota (TRI): <strong style="font-size:1.8rem;">${triScore}</strong> / 1000 <br> Acertos: ${rawScore}/${totalQuestoes} <br><span style="font-size:0.9rem;">${penalty ? "⚠️ Inconsistência de respostas detetada (Chute)." : "✔️ Coerência técnica mantida."}</span>`;
+            rBox.style.display = 'block';
+
+            form.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
+            form.querySelector('.btn-submit').style.display = 'none';
+        }
+
+        function buildReport() {
+            const container = document.getElementById('report-content');
+            if(!studentData.name) return container.innerHTML = "<p>Identifique-se para visualizar o relatório.</p>";
+            if(Object.keys(studentData.results).length === 0) return container.innerHTML = "<p>Nenhum simulado enviado.</p>";
+
+            let html = `<h3 style="color:var(--primary);">Estudante: ${studentData.name}</h3><hr style="margin:15px 0;">`;
+            for (const [aula, res] of Object.entries(studentData.results)) {
+                let badgeColor = res.tri >= 700 ? "#2e7d32" : (res.tri >= 500 ? "#f57f17" : "#c62828");
+                let chuteAviso = res.coherencePenalty ? `<div style="background:#ffebee; color:#c62828; padding:8px; border-radius:4px; font-size:0.85rem; margin-top:10px;">⚠️ Penalidade TRI Aplicada: Incoerência.</div>` : "";
+                
+                html += `<div class="report-card">
+                    <h4 style="text-transform: capitalize; color: var(--primary);">${aula.replace('aula', 'Aula ')}</h4>
+                    <p>Acertos Brutos: <strong>${res.raw} de ${res.total}</strong></p>
+                    <p>Nota TRI Ponderada: <strong style="color:${badgeColor}; font-size:1.4rem;">${res.tri}</strong> / 1000</p>
+                    ${chuteAviso}
+                </div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function exportToWhatsApp() {
+            if(!studentData.name || Object.keys(studentData.results).length === 0) return alert("Sem dados.");
+            let text = `*📊 RELATÓRIO TÉCNICO TRI - CEPNAC*%0A*👨‍🎓 Estudante:* ${studentData.name}%0A%0A`;
+            let somaTri = 0; let count = 0;
+            for (const [aula, res] of Object.entries(studentData.results)) {
+                text += `📝 *${aula.toUpperCase()}*%0A✅ Acertos: ${res.raw}/${res.total}%0A🎯 *Nota TRI:* ${res.tri} pts${res.coherencePenalty ? ' ⚠️ (Chute)' : ''}%0A%0A`;
+                somaTri += res.tri; count++;
+            }
+            text += `🏆 *MÉDIA GLOBAL TRI:* ${Math.round(somaTri/count)} pontos.%0A_Plataforma Offline CEPNAC._`;
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+        }
+    </script>
+</body>
+</html>
